@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { MotionValue } from "motion/react";
 import { Icon } from "@/components/ui/icon";
 import { Reveal } from "@/components/ui/reveal";
@@ -15,17 +15,8 @@ type FeatureCard = Dictionary["home"]["features"]["cards"][number];
 export function Features({ t, locale }: { t: Dictionary["home"]["features"]; locale: Locale }) {
   const sequenceRef = useRef<HTMLDivElement>(null);
   const [accessibleScene, setAccessibleScene] = useState(-1);
-  const [isMobile, setIsMobile] = useState(false);
   const reduceMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: sequenceRef, offset: ["start start", "end start"] });
-
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 639px)");
-    const update = () => setIsMobile(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
 
   // Keep the opening overview on screen for a full scroll, then scrub each feature into view.
   const overviewOpacity = useTransform(scrollYProgress, [0, 0.11, 0.19, 0.24], [1, 1, 0.45, 0]);
@@ -55,7 +46,13 @@ export function Features({ t, locale }: { t: Dictionary["home"]["features"]; loc
         <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/65">{t.description}</p>
       </Reveal>
 
-      <div ref={sequenceRef} className="relative -mx-5 mt-9 h-[500svh] sm:-mx-8 sm:mt-12 sm:h-[650vh]">
+      <div className="mx-auto mt-9 grid max-w-2xl gap-5 sm:mt-12 lg:hidden">
+        {cards.map((card, index) => (
+          <MobileFeatureCard key={card.title} card={card} index={index} locale={locale} reduceMotion={Boolean(reduceMotion)} />
+        ))}
+      </div>
+
+      <div ref={sequenceRef} className="relative -mx-5 mt-9 hidden h-[650vh] lg:-mx-8 lg:mt-12 lg:block">
         <div className="sticky top-0 isolate h-dvh min-h-0 overflow-hidden bg-pieride-night sm:min-h-[580px]">
           <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-radial from-pieride-violet/45 via-pieride-night/40 to-pieride-night" />
           <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-28 bg-linear-to-t from-pieride-night/70 to-transparent" />
@@ -71,17 +68,49 @@ export function Features({ t, locale }: { t: Dictionary["home"]["features"]; loc
           </motion.div>
 
           {cards.map((card, index) => (
-            <FeatureSlide key={card.title} card={card} index={index} cards={cards} locale={locale} progress={scrollYProgress} isAccessible={accessibleScene === index} isMobile={isMobile} reduceMotion={Boolean(reduceMotion)} onSelect={goToFeature} />
+            <FeatureSlide key={card.title} card={card} index={index} cards={cards} locale={locale} progress={scrollYProgress} isAccessible={accessibleScene === index} reduceMotion={Boolean(reduceMotion)} onSelect={goToFeature} />
           ))}
 
         </div>
       </div>
-      <p className="mx-auto mt-4 hidden max-w-7xl pb-8 text-sm text-white/45 sm:block sm:pb-10">{t.note}</p>
+      <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/50 lg:mt-4 lg:max-w-7xl lg:pb-10">{t.note}</p>
     </section>
   );
 }
 
-function FeatureSlide({ card, index, cards, locale, progress, isAccessible, isMobile, reduceMotion, onSelect }: { card: FeatureCard; index: number; cards: readonly FeatureCard[]; locale: Locale; progress: MotionValue<number>; isAccessible: boolean; isMobile: boolean; reduceMotion: boolean; onSelect: (index: number) => void }) {
+function MobileFeatureCard({ card, index, locale, reduceMotion }: { card: FeatureCard; index: number; locale: Locale; reduceMotion: boolean }) {
+  return (
+    <motion.article
+      data-theme-surface
+      initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.16 }}
+      transition={{ duration: 0.55, delay: index * 0.07 }}
+      className="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white text-pieride-ink shadow-[0_18px_55px_-34px_rgba(0,0,0,0.8)] sm:rounded-[1.8rem]"
+    >
+      <div className="relative aspect-[16/10] overflow-hidden bg-[#111326] sm:aspect-[16/9]">
+        {card.image ? (
+          <>
+            <Image src={withBasePath(card.image)!} alt="" fill unoptimized sizes="(min-width: 640px) 640px, 100vw" aria-hidden className="scale-110 object-cover opacity-35 blur-2xl" />
+            <Image src={withBasePath(card.image)!} alt={card.alt} fill unoptimized sizes="(min-width: 640px) 640px, 100vw" className="object-contain p-2 transition-transform duration-700 group-hover:scale-[1.025] sm:p-3" />
+          </>
+        ) : (
+          <RepositoryPreview locale={locale} />
+        )}
+        <span className="absolute left-3 top-3 grid size-9 place-items-center rounded-xl border border-white/35 bg-pieride-ink/70 text-white shadow-lg backdrop-blur sm:left-4 sm:top-4 sm:size-10">
+          <Icon name={card.icon} className="size-5" />
+        </span>
+      </div>
+      <div className="px-5 py-5 sm:px-6 sm:py-6">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-pieride-violet">Piéride · {String(index + 1).padStart(2, "0")}</p>
+        <h3 className="mt-2 font-display text-xl font-extrabold leading-tight tracking-tight text-balance sm:text-2xl">{card.title}</h3>
+        <p className="mt-2 text-sm leading-relaxed text-pieride-muted sm:text-base">{card.description}</p>
+      </div>
+    </motion.article>
+  );
+}
+
+function FeatureSlide({ card, index, cards, locale, progress, isAccessible, reduceMotion, onSelect }: { card: FeatureCard; index: number; cards: readonly FeatureCard[]; locale: Locale; progress: MotionValue<number>; isAccessible: boolean; reduceMotion: boolean; onSelect: (index: number) => void }) {
   const start = [0.14, 0.43, 0.72][index] ?? 0.14;
   const end = [0.23, 0.52, 0.81][index] ?? 0.23;
   const exitStart = [0.43, 0.72, 1][index] ?? 1;
@@ -98,7 +127,7 @@ function FeatureSlide({ card, index, cards, locale, progress, isAccessible, isMo
   const copyOpacity = useTransform(progress, input, index === 2 ? [0, 1, 1] : [0, 1, 1, 0]);
 
   return (
-    <motion.article aria-hidden={!isAccessible} style={{ opacity, scale: reduceMotion ? 1 : scale, x: reduceMotion || isMobile ? 0 : x, y: reduceMotion ? 0 : y }} className="pointer-events-none absolute inset-0 z-20 mx-auto flex h-full w-full max-w-[1480px] flex-col px-4 pb-5 pt-10 sm:px-8 sm:pb-10 sm:pt-16">
+    <motion.article aria-hidden={!isAccessible} style={{ opacity, scale: reduceMotion ? 1 : scale, x: reduceMotion ? 0 : x, y: reduceMotion ? 0 : y }} className="pointer-events-none absolute inset-0 z-20 mx-auto flex h-full w-full max-w-[1480px] flex-col px-5 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-16">
       <nav aria-label={locale === "fr" ? "Parcourir les fonctionnalités" : "Browse features"} className="pointer-events-auto mx-auto flex items-center gap-3 sm:gap-5">
         {cards.map((item, itemIndex) => (
           <button type="button" key={item.title} onClick={() => onSelect(itemIndex)} aria-label={`${locale === "fr" ? "Voir" : "View"} : ${item.title}`} aria-current={itemIndex === index ? "step" : undefined} className={`grid size-11 place-items-center rounded-2xl border transition duration-300 hover:-translate-y-1 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pieride-cyan sm:size-14 sm:rounded-[1.15rem] ${itemIndex === index ? "scale-110 border-pieride-cyan bg-pieride-cyan text-pieride-ink shadow-lg shadow-pieride-cyan/20" : "border-white/15 bg-white/[0.07] text-white/55 hover:border-pieride-cyan/70 hover:text-white"}`}>
@@ -107,7 +136,7 @@ function FeatureSlide({ card, index, cards, locale, progress, isAccessible, isMo
         ))}
       </nav>
 
-      <div className="relative mx-auto mt-3 flex min-h-0 w-full max-w-6xl flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/15 bg-[#111326] shadow-[0_28px_75px_-35px_rgba(0,0,0,0.85)] sm:mt-6 sm:rounded-[2rem] sm:shadow-[0_35px_100px_-35px_rgba(0,0,0,0.85)]">
+      <div className="relative mx-auto mt-5 flex min-h-0 w-full max-w-6xl flex-1 items-center justify-center overflow-hidden rounded-[1.7rem] border border-white/15 bg-[#111326] shadow-[0_35px_100px_-35px_rgba(0,0,0,0.85)] sm:mt-6 sm:rounded-[2rem]">
         <motion.div aria-hidden={card.image ? undefined : true} style={{ scale: reduceMotion ? 1 : imageScale, x: reduceMotion ? 0 : imageX }} className="absolute inset-0 grid place-items-center">
           {card.image ? (
             <Image src={withBasePath(card.image)!} alt={card.alt} fill unoptimized sizes="(min-width: 1280px) 80vw, 96vw" className="object-contain" />
@@ -119,10 +148,10 @@ function FeatureSlide({ card, index, cards, locale, progress, isAccessible, isMo
         <span aria-hidden className="absolute inset-x-0 bottom-0 h-20 bg-linear-to-t from-[#111326]/35 to-transparent" />
       </div>
 
-      <motion.div style={{ opacity: copyOpacity, y: reduceMotion ? 0 : copyY }} className="mx-auto w-full max-w-5xl shrink-0 pb-1 pt-3 text-center sm:pt-5">
+      <motion.div style={{ opacity: copyOpacity, y: reduceMotion ? 0 : copyY }} className="mx-auto w-full max-w-5xl shrink-0 pb-1 pt-4 text-center sm:pt-5">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-pieride-cyan">{String(index + 1).padStart(2, "0")} · {card.title}</p>
-        <h3 className="mt-1 font-display text-xl font-extrabold tracking-tight text-white text-balance sm:mt-2 sm:text-4xl">{card.title}</h3>
-        <p className="mx-auto mt-1 max-w-3xl text-[13px] leading-snug text-white/70 sm:mt-3 sm:text-lg sm:leading-relaxed">{card.description}</p>
+        <h3 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-white text-balance sm:text-4xl">{card.title}</h3>
+        <p className="mx-auto mt-2 max-w-3xl text-sm leading-relaxed text-white/65 sm:mt-3 sm:text-lg">{card.description}</p>
       </motion.div>
     </motion.article>
   );
