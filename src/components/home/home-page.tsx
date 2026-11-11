@@ -13,7 +13,7 @@ export function HomePage({ dictionary, locale, blog }: { dictionary: Dictionary;
   return (
     <main id="contenu" className="overflow-x-clip">
       <HomeHero t={dictionary.home.hero} locale={locale} />
-      <Features t={dictionary.home.features} />
+      <Features t={dictionary.home.features} locale={locale} />
       <Product t={dictionary.home.product} />
       <Stories t={dictionary.home.stories} locale={locale} />
       <div className="mx-auto max-w-7xl px-5 sm:px-8"><TeamSpotlight t={dictionary.home.team} locale={locale} /></div>
