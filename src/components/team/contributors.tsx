@@ -6,6 +6,7 @@ import { Icon } from "@/components/ui/icon";
 import type { Dictionary } from "@/i18n/dictionaries/fr";
 
 const repository = "https://github.com/PierideApp/Pieride";
+const contributorsApi = "https://api.github.com/repos/PierideApp/Pieride/contributors?per_page=8";
 type Contributor = { login: string; html_url: string; avatar_url: string; contributions: number };
 
 export function Contributors({ t }: { t: Dictionary["team"] }) {
@@ -16,9 +17,10 @@ export function Contributors({ t }: { t: Dictionary["team"] }) {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 9000);
     let active = true;
-    fetch(`${repository}/contributors?per_page=8`, { headers: { Accept: "application/vnd.github+json" }, signal: controller.signal })
+    fetch(contributorsApi, { headers: { Accept: "application/vnd.github+json" }, signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error("GitHub unavailable");
+        if (response.status === 204) return [];
         return response.json() as Promise<Contributor[]>;
       })
       .then((data) => {
