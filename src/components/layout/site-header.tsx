@@ -53,9 +53,8 @@ export function SiteHeader({ t, locale }: { t: Dictionary["nav"]; locale: Locale
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <LanguageSwitch locale={locale} pathname={pathname} label={t.language} className="hidden lg:inline-flex" />
           <div className="hidden lg:block">{themeToggle}</div>
-          <Link data-theme-preserve href={localizedPath(locale, "/telecharger")} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full bg-pieride-violet px-4 text-sm font-semibold text-white transition hover:bg-pieride-violet-bright active:scale-95 sm:px-5">
-            <span className="hidden sm:inline">{t.download}</span>
-            <span className="sm:hidden">{t.download.split(" ")[0]}</span>
+          <Link data-theme-preserve href={localizedPath(locale, "/telecharger")} className="hidden min-h-10 shrink-0 items-center gap-2 rounded-full bg-pieride-violet px-4 text-sm font-semibold text-white transition hover:bg-pieride-violet-bright active:scale-95 sm:px-5 lg:inline-flex">
+            <span>{t.download}</span>
             <Icon name="download" className="size-4" />
           </Link>
         </div>
@@ -75,6 +74,9 @@ export function SiteHeader({ t, locale }: { t: Dictionary["nav"]; locale: Locale
             >
               {links.map((link) => <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className="rounded-2xl px-4 py-3 text-base font-semibold transition-colors hover:bg-pieride-violet/10">{link.label}</Link>)}
               <a href={documentationHref()} target="_blank" rel="noreferrer" onClick={() => setOpen(false)} className="rounded-2xl px-4 py-3 text-base font-semibold transition-colors hover:bg-pieride-violet/10">{t.guides}<Icon name="external" className="ml-2 inline size-4" /></a>
+              <Link data-theme-preserve href={localizedPath(locale, "/telecharger")} onClick={() => setOpen(false)} className="mt-2 inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-pieride-violet px-4 py-3 text-base font-bold text-white shadow-md transition hover:bg-pieride-violet-bright active:scale-[0.98]">
+                {t.download}<Icon name="download" className="size-4" />
+              </Link>
               <div className="mt-2 flex items-center justify-between border-t border-pieride-line px-4 pt-3">
                 <span className="text-sm font-semibold text-pieride-muted">{t.language}</span>
                 <LanguageSwitch locale={locale} pathname={pathname} label={t.language} onSelect={() => setOpen(false)} />
