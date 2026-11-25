@@ -21,7 +21,8 @@ function postCover(page: BlogArticle) {
 const englishCategories: Record<string, string> = { updates: "Updates" };
 
 export function PostList({ t, blog, locale }: { t: Dictionary["blog"]; blog: BlogArchive; locale: Locale }) {
-  const posts: BlogPost[] = blog.pages.map((page) => ({
+  const articles = blog.pages.filter((page) => page.slug !== "index" && !page.slug.endsWith("/index"));
+  const posts: BlogPost[] = articles.map((page) => ({
     title: locale === "en" ? page.titleEn || page.title : page.title,
     description: locale === "en" ? page.descriptionEn || page.description : page.description,
     category: locale === "en" ? englishCategories[page.categorySlug] || page.categorySlug : blog.categories.find((category) => category.slug === page.categorySlug)?.name || page.categorySlug,
@@ -40,7 +41,7 @@ export function PostList({ t, blog, locale }: { t: Dictionary["blog"]; blog: Blo
         <p className="text-sm font-bold uppercase tracking-widest text-pieride-cyan">{t.eyebrow}</p>
         <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-balance sm:text-6xl">{t.title}</h1>
         <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/65">{t.description}</p>
-        <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80">{blog.pages.length} {t.articleCount}</span>
+        <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80">{articles.length} {t.articleCount}</span>
       </header>
       <BlogExplorer t={t} posts={posts} locale={locale} categories={categories} />
     </main>
