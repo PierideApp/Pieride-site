@@ -177,7 +177,7 @@ function StorySlide({
       style={{ x, opacity, scale, rotateY, zIndex }}
       className={`story-carousel__slide absolute inset-y-0 left-0 flex w-screen items-center px-[5vw] [transform-style:preserve-3d] ${active ? "" : "pointer-events-none"}`}
     >
-      <div className="story-carousel__panel relative mx-auto grid w-full max-w-[1600px] items-center gap-4 overflow-hidden rounded-[2rem] border border-white/15 bg-linear-to-br from-pieride-surface via-[#19165d] to-pieride-night p-5 shadow-[0_35px_100px_-35px_rgba(0,0,0,0.8)] sm:gap-7 sm:p-8 lg:h-[min(78svh,760px)] lg:min-h-[560px] lg:grid-cols-[0.82fr_1.18fr] lg:gap-12 lg:rounded-[2.25rem] lg:p-12">
+      <div className="story-carousel__panel relative mx-auto grid w-full max-w-[1600px] items-center gap-4 overflow-hidden rounded-[2rem] border border-white/15 bg-linear-to-br from-pieride-surface via-[#19165d] to-pieride-night p-5 shadow-[0_35px_100px_-35px_rgba(0,0,0,0.8)] sm:gap-7 sm:p-8 md:h-[min(78svh,760px)] md:min-h-[480px] md:grid-cols-[0.82fr_1.18fr] md:gap-12 md:rounded-[2.25rem] md:p-10 lg:p-12">
         <div className="absolute -right-20 -top-24 size-64 rounded-full bg-pieride-violet-bright/20 blur-3xl" aria-hidden />
         <div className="relative z-10 min-w-0">
           <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-pieride-cyan sm:text-sm">{story.number} · {story.eyebrow}</p>
@@ -192,7 +192,7 @@ function StorySlide({
           ) : null}
         </div>
 
-        <div className="relative z-10 min-w-0 lg:pl-1">
+        <div className="story-carousel__visual relative z-10 min-w-0 md:pl-1">
           <DesktopMonitor src={story.image} alt={story.alt} sizes="(min-width: 1536px) 55vw, (min-width: 1024px) 58vw, 100vw" />
         </div>
       </div>
