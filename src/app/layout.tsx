@@ -21,7 +21,10 @@ const unbounded = localFont({
 export const metadata: Metadata = {
   title: { default: "Piéride — Ta vie scolaire sur grand écran", template: "%s · Piéride" },
   description: "Découvre Piéride, l’application scolaire open source pour ordinateur.",
-  icons: { icon: "/brand/pieride-icon.png" },
+  icons: {
+    icon: [{ url: "/favicon.ico", type: "image/x-icon" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
