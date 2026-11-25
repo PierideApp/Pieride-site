@@ -36,11 +36,11 @@ function FeatureCardView({ card, index, locale, reduceMotion }: { card: FeatureC
   return (
     <motion.article
       data-theme-surface
-      initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
       whileHover={reduceMotion ? undefined : { y: -5 }}
       viewport={{ once: true, amount: 0.16 }}
-      transition={{ duration: 0.5, delay: index * 0.07 }}
+      transition={{ duration: reduceMotion ? 0 : 0.5, delay: index * 0.07 }}
       className="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white text-pieride-ink shadow-[0_18px_55px_-34px_rgba(0,0,0,0.8)] sm:rounded-[1.8rem]"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-[#111326] sm:aspect-[16/9]">
