@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { withBasePath } from "@/lib/site-path";
 import "./globals.css";
 
 const snPro = localFont({
@@ -22,8 +23,8 @@ export const metadata: Metadata = {
   title: { default: "Piéride — Ta vie scolaire sur grand écran", template: "%s · Piéride" },
   description: "Découvre Piéride, l’application scolaire open source pour ordinateur.",
   icons: {
-    icon: [{ url: "/favicon.ico", type: "image/x-icon" }],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    icon: [{ url: withBasePath("/favicon.ico")!, type: "image/x-icon" }],
+    apple: [{ url: withBasePath("/apple-touch-icon.png")!, sizes: "180x180", type: "image/png" }],
   },
 };
 
