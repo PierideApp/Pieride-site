@@ -1,9 +1,10 @@
 ---
-title: v0.1.0-beta.2
-slug: v0-1-0-beta-2
-tag: MAJ
-date: 2026-11-17
-version: 0.1.0-beta.2
+title: "v0.1.0-beta.2"
+slug: "v0-1-0-beta-2"
+tag: "MAJ"
+date: "2026-11-17"
+version: "0.1.0-beta.2"
+description: "Cette version règle les premiers soucis remontés depuis la sortie de la bêta : la synchro PRONOTE est plus fiable et Piéride te prévient quand tu dois te reconnecter."
 ---
 
 Cette version règle les premiers soucis remontés depuis la sortie de la bêta : la synchro PRONOTE est plus fiable et Piéride te prévient quand tu dois te reconnecter.
