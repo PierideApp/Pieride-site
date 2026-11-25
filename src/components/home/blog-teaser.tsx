@@ -26,8 +26,9 @@ function articleCover(page: BlogArticle) {
 const englishCategories: Record<string, string> = { updates: "Updates" };
 
 export function BlogTeaser({ t, locale, pages, categories }: { t: Dictionary["home"]["blog"]; locale: Locale; pages: BlogArticle[]; categories: BlogCategory[] }) {
-  const featured = pages.filter((page) => page.featured).slice(0, 3);
-  const visible = featured.length ? featured : pages.slice(0, 3);
+  const articles = pages.filter((page) => page.slug !== "index" && !page.slug.endsWith("/index"));
+  const featured = articles.filter((page) => page.featured).slice(0, 3);
+  const visible = featured.length ? featured : articles.slice(0, 3);
   if (!visible.length) return null;
 
   return (
