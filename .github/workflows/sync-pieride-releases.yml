@@ -1,0 +1,40 @@
+name: Synchronise les releases Piéride
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-pieride-releases-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le site
+        uses: actions/checkout@v6
+
+      - name: Configurer Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Générer et synchroniser les articles de release
+        run: node scripts/generate-maj-posts.mjs
+
+      - name: Enregistrer les articles générés
+        run: |
+          git add -- docs/updates/*.md
+          if git diff --cached --quiet; then
+            echo "Aucune note de version à synchroniser."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(blog): synchronise les notes de version"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
