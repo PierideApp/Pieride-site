@@ -22,7 +22,7 @@ export function GridMotion() {
   }, [pointer, reduceMotion]);
 
   return (
-    <motion.div aria-hidden initial={reduceMotion ? false : { opacity: 0, scale: 1.12 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.25, ease: easeOutPapillon }} className="absolute -inset-1/4 grid -rotate-12 grid-rows-4 gap-4 opacity-55">
+    <motion.div aria-hidden initial={{ opacity: 0, scale: 1.12 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: reduceMotion ? 0 : 1.25, ease: easeOutPapillon }} className="absolute -inset-1/4 grid -rotate-12 grid-rows-4 gap-4 opacity-55">
       {Array.from({ length: 4 }, (_, row) => <GridRow key={row} row={row} pointer={pointer} />)}
     </motion.div>
   );
