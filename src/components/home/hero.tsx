@@ -13,14 +13,14 @@ import { easeOutPapillon } from "@/lib/motion";
 export function HomeHero({ t, locale }: { t: Dictionary["home"]["hero"]; locale: Locale }) {
   const reduceMotion = useReducedMotion();
   const reveal = (delay: number) => ({
-    initial: reduceMotion ? false : { opacity: 0, y: 20 },
+    initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.65, delay, ease: easeOutPapillon },
+    transition: { duration: reduceMotion ? 0 : 0.65, delay, ease: easeOutPapillon },
   });
 
   return (
     <section data-dark-hero data-theme-preserve className="relative isolate flex min-h-svh items-center justify-center overflow-hidden bg-linear-to-br from-pieride-violet-bright via-pieride-violet to-pieride-night px-6 pb-14 pt-32 text-center sm:pt-36">
-      <motion.div aria-hidden initial={reduceMotion ? false : { opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.1, ease: easeOutPapillon }} className="absolute inset-0 -z-10">
+      <motion.div aria-hidden initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: reduceMotion ? 0 : 1.1, ease: easeOutPapillon }} className="absolute inset-0 -z-10">
         <Image src={withBasePath("/brand/motif.svg")!} alt="" fill priority unoptimized sizes="100vw" className="object-cover object-center opacity-95" />
         <div className="absolute inset-0 bg-radial from-pieride-violet-bright/55 via-transparent to-pieride-night/45" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-pieride-night to-transparent" />
