@@ -1,8 +1,8 @@
-name: Synchronise les releases Piéride
+name: Traiter une release Piéride
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
+  repository_dispatch:
+    types: [pieride-release-published]
   workflow_dispatch:
 
 permissions:
