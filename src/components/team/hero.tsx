@@ -12,9 +12,9 @@ import { GridMotion } from "./grid-motion";
 export function TeamHero({ t, locale }: { t: Dictionary["team"]; locale: Locale }) {
   const reduceMotion = useReducedMotion();
   const reveal = (delay: number) => ({
-    initial: reduceMotion ? false : { opacity: 0, y: 22 },
+    initial: { opacity: 0, y: 22 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.65, delay, ease: easeOutPapillon },
+    transition: { duration: reduceMotion ? 0 : 0.65, delay, ease: easeOutPapillon },
   });
 
   return (
