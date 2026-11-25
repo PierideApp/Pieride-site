@@ -12,6 +12,36 @@ import { localizedPath } from "@/lib/routes";
 type Story = Dictionary["home"]["stories"][number];
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+const STORY_HOLD_VIEWPORTS = 0.32;
+const STORY_TRANSITION_VIEWPORTS = 1;
+
+function totalScrollViewports(count: number) {
+  return count * STORY_HOLD_VIEWPORTS + Math.max(0, count - 1) * STORY_TRANSITION_VIEWPORTS;
+}
+
+function storyPosition(progress: number, count: number) {
+  if (count <= 1) return 0;
+
+  let distance = clamp(progress, 0, 1) * totalScrollViewports(count);
+  for (let index = 0; index < count; index += 1) {
+    if (distance <= STORY_HOLD_VIEWPORTS) return index;
+    distance -= STORY_HOLD_VIEWPORTS;
+
+    if (index < count - 1) {
+      if (distance <= STORY_TRANSITION_VIEWPORTS) {
+        const transition = distance / STORY_TRANSITION_VIEWPORTS;
+        return index + transition * transition * (3 - 2 * transition);
+      }
+      distance -= STORY_TRANSITION_VIEWPORTS;
+    }
+  }
+  return count - 1;
+}
+
+function storyProgress(index: number, count: number) {
+  const units = totalScrollViewports(count);
+  return units === 0 ? 0 : (index * (STORY_HOLD_VIEWPORTS + STORY_TRANSITION_VIEWPORTS) + STORY_HOLD_VIEWPORTS / 2) / units;
+}
 
 export function Stories({ t, locale }: { t: Dictionary["home"]["stories"]; locale: Locale }) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -34,7 +64,7 @@ export function Stories({ t, locale }: { t: Dictionary["home"]["stories"]; local
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
     if (staticLayout || lastIndex === 0) return;
-    const nextIndex = clamp(Math.round(progress * lastIndex), 0, lastIndex);
+    const nextIndex = clamp(Math.round(storyPosition(progress, t.length)), 0, lastIndex);
     setActiveIndex((current) => current === nextIndex ? current : nextIndex);
   });
 
@@ -45,7 +75,7 @@ export function Stories({ t, locale }: { t: Dictionary["home"]["stories"]; local
     const sectionTop = window.scrollY + section.getBoundingClientRect().top;
     const scrollDistance = Math.max(0, section.offsetHeight - window.innerHeight);
     window.scrollTo({
-      top: sectionTop + (index / lastIndex) * scrollDistance,
+      top: sectionTop + storyProgress(index, t.length) * scrollDistance,
       behavior: staticLayout ? "auto" : "smooth",
     });
   }
@@ -56,7 +86,7 @@ export function Stories({ t, locale }: { t: Dictionary["home"]["stories"]; local
       id="stories"
       aria-label={locale === "fr" ? "Découvrir Piéride" : "Discover Piéride"}
       className="story-carousel relative bg-pieride-night"
-      style={{ height: `${Math.max(1, t.length) * 100}svh` }}
+      style={{ height: `${(totalScrollViewports(t.length) + 1) * 100}svh` }}
     >
       <div className="story-carousel__pin sticky top-0 flex h-svh items-center overflow-hidden [perspective:1400px]">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -120,21 +150,22 @@ function StorySlide({
   locale: Locale;
   progress: MotionValue<number>;
 }) {
-  const x = useTransform(progress, (value) => `${(index - value * Math.max(0, count - 1)) * 100}%`);
-  const opacity = useTransform(progress, (value) => {
-    const distance = Math.abs(index - value * Math.max(0, count - 1));
+  const position = useTransform(progress, (value) => storyPosition(value, count));
+  const x = useTransform(position, (value) => `${(index - value) * 100}%`);
+  const opacity = useTransform(position, (value) => {
+    const distance = Math.abs(index - value);
     return clamp(1 - distance * 0.68, 0.12, 1);
   });
-  const scale = useTransform(progress, (value) => {
-    const distance = Math.abs(index - value * Math.max(0, count - 1));
+  const scale = useTransform(position, (value) => {
+    const distance = Math.abs(index - value);
     return clamp(1 - distance * 0.06, 0.86, 1);
   });
-  const rotateY = useTransform(progress, (value) => {
-    const offset = index - value * Math.max(0, count - 1);
+  const rotateY = useTransform(position, (value) => {
+    const offset = index - value;
     return `${clamp(offset * -4, -8, 8)}deg`;
   });
-  const zIndex = useTransform(progress, (value) => {
-    const distance = Math.abs(index - value * Math.max(0, count - 1));
+  const zIndex = useTransform(position, (value) => {
+    const distance = Math.abs(index - value);
     return Math.round(100 - distance);
   });
 
