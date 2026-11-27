@@ -10,7 +10,6 @@ import type { Locale } from "@/i18n/config";
 import { localizedPath } from "@/lib/routes";
 import { withBasePath } from "@/lib/site-path";
 import { easeOutPapillon } from "@/lib/motion";
-import { BlogMarkdown } from "./blog-markdown";
 
 export type BlogPost = {
   title: string;
@@ -22,8 +21,6 @@ export type BlogPost = {
   searchText: string;
   cover: string;
   coverAlt: string;
-  releaseBody?: string;
-  releaseUrl?: string;
   publishedAt?: string;
   version?: string;
 };
@@ -79,7 +76,6 @@ export function BlogExplorer({ t, posts, locale, categories, releaseStatus }: { 
   const [filterName, setFilterName] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterKeyword, setFilterKeyword] = useState("");
-  const [expandedRelease, setExpandedRelease] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -196,8 +192,7 @@ export function BlogExplorer({ t, posts, locale, categories, releaseStatus }: { 
           <motion.div layout className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
               {results.map((post, index) => {
-                const isRelease = post.releaseBody !== undefined;
-                const isExpanded = expandedRelease === post.source;
+                const isRelease = Boolean(post.version);
                 const cardClass = "flex h-full min-h-80 w-full flex-col overflow-hidden rounded-3xl border border-white/15 bg-white text-left text-pieride-ink shadow-xl shadow-black/15 transition-colors hover:border-pieride-cyan focus-visible:outline-pieride-cyan";
                 const cardContent = <>
                   <div className="relative h-48 w-full shrink-0 overflow-hidden bg-linear-to-br from-pieride-violet to-pieride-night">
@@ -209,21 +204,13 @@ export function BlogExplorer({ t, posts, locale, categories, releaseStatus }: { 
                     {post.version && <p className="text-xs font-bold uppercase tracking-wider text-pieride-violet">{post.version}</p>}
                     <h3 className="mt-1 text-xl font-bold leading-snug text-pieride-ink">{post.title}</h3>
                     <p className="mt-3 line-clamp-3 flex-1 text-base leading-relaxed text-pieride-muted">{post.description}</p>
-                    <span className="mt-5 inline-flex min-h-10 items-center gap-2 self-start rounded-full border-2 border-pieride-violet bg-white px-4 text-sm font-bold text-pieride-violet transition duration-200 group-hover:bg-pieride-violet group-hover:text-white">{isRelease ? (isExpanded ? t.closeRelease : t.readRelease) : t.readArticle}<Icon name="arrow" className="size-4 transition group-hover:translate-x-1" /></span>
+                    <span className="mt-5 inline-flex min-h-10 items-center gap-2 self-start rounded-full border-2 border-pieride-violet bg-white px-4 text-sm font-bold text-pieride-violet transition duration-200 group-hover:bg-pieride-violet group-hover:text-white">{isRelease ? t.readRelease : t.readArticle}<Icon name="arrow" className="size-4 transition group-hover:translate-x-1" /></span>
                   </div>
                 </>;
 
                 return (
                   <motion.article key={post.source} layout initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }} transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : Math.min(index * 0.025, 0.15), ease: easeOutPapillon }} whileHover={reduceMotion ? undefined : { y: -5 }} className="group h-full">
-                    {isRelease ? (
-                      <button data-theme-surface type="button" aria-expanded={isExpanded} aria-controls={`release-notes-${post.source}`} onClick={() => setExpandedRelease(isExpanded ? null : post.source)} className={cardClass}>{cardContent}</button>
-                    ) : (
-                      <Link data-theme-surface href={localizedPath(locale, post.slug)} className={cardClass}>{cardContent}</Link>
-                    )}
-                    {isRelease && isExpanded && <div id={`release-notes-${post.source}`} data-theme-surface className="mt-3 rounded-3xl border border-white/15 bg-white p-5 text-pieride-ink shadow-xl shadow-black/15 sm:p-6">
-                      <div className="markdown-body"><BlogMarkdown content={post.releaseBody || ""} locale={locale} /></div>
-                      {post.releaseUrl && <a href={post.releaseUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 border-t border-pieride-line pt-4 text-sm font-bold text-pieride-violet underline underline-offset-4">{t.releasesGithub}<Icon name="arrow" className="size-4" /></a>}
-                    </div>}
+                    <Link data-theme-surface href={isRelease ? `${localizedPath(locale, "/blog/release")}?tag=${encodeURIComponent(post.version!)}` : localizedPath(locale, post.slug)} className={cardClass}>{cardContent}</Link>
                   </motion.article>
                 );
               })}
