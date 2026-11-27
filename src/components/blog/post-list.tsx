@@ -4,17 +4,8 @@ import { useEffect, useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries/fr";
 import type { Locale } from "@/i18n/config";
 import type { BlogArchive, BlogArticle } from "@/lib/blog-content";
+import { fetchPublishedReleases } from "@/lib/github-releases";
 import { BlogExplorer, type BlogPost } from "./blog-explorer";
-
-type GitHubRelease = {
-  id: number;
-  tag_name: string;
-  name: string | null;
-  html_url: string;
-  published_at: string | null;
-  body: string | null;
-  draft: boolean;
-};
 
 function postPath(page: BlogArticle) {
   const slug = page.slug === "index" ? "" : page.slug.endsWith("/index") ? page.slug.slice(0, -6) : page.slug;
@@ -50,8 +41,6 @@ function releaseDescription(body: string, locale: Locale) {
 }
 
 const englishCategories: Record<string, string> = { updates: "Updates" };
-const releaseApi = "https://api.github.com/repos/PierideApp/Pieride/releases?per_page=100";
-
 export function PostList({ t, blog, locale }: { t: Dictionary["blog"]; blog: BlogArchive; locale: Locale }) {
   const [releasePosts, setReleasePosts] = useState<BlogPost[]>([]);
   const [releaseStatus, setReleaseStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -70,15 +59,9 @@ export function PostList({ t, blog, locale }: { t: Dictionary["blog"]; blog: Blo
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(releaseApi, { headers: { Accept: "application/vnd.github+json" }, cache: "no-store", signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error(`GitHub API ${response.status}`);
-        return response.json() as Promise<GitHubRelease[]>;
-      })
+    fetchPublishedReleases(controller.signal)
       .then((releases) => {
-        if (!Array.isArray(releases)) throw new Error("Invalid GitHub releases response");
         const posts = releases
-          .filter((release) => !release.draft && Boolean(release.published_at && release.tag_name && release.html_url))
           .map((release): BlogPost => {
             const body = release.body?.trim() || "";
             return {
@@ -91,8 +74,6 @@ export function PostList({ t, blog, locale }: { t: Dictionary["blog"]; blog: Blo
               searchText: plainText(body),
               cover: "/visuels/accueil.jpg",
               coverAlt: locale === "en" ? `Piéride release ${release.tag_name}` : `Release Piéride ${release.tag_name}`,
-              releaseBody: body,
-              releaseUrl: release.html_url,
               publishedAt: release.published_at || undefined,
               version: release.tag_name,
             };
