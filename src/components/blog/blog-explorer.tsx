@@ -10,6 +10,7 @@ import type { Locale } from "@/i18n/config";
 import { localizedPath } from "@/lib/routes";
 import { withBasePath } from "@/lib/site-path";
 import { easeOutPapillon } from "@/lib/motion";
+import { BlogMarkdown } from "./blog-markdown";
 
 export type BlogPost = {
   title: string;
@@ -21,6 +22,10 @@ export type BlogPost = {
   searchText: string;
   cover: string;
   coverAlt: string;
+  releaseBody?: string;
+  releaseUrl?: string;
+  publishedAt?: string;
+  version?: string;
 };
 
 type BlogCategory = { slug: string; name: string };
@@ -65,7 +70,7 @@ function relevance(post: BlogPost, query: string) {
   return score;
 }
 
-export function BlogExplorer({ t, posts, locale, categories }: { t: Dictionary["blog"]; posts: BlogPost[]; locale: Locale; categories: BlogCategory[] }) {
+export function BlogExplorer({ t, posts, locale, categories, releaseStatus }: { t: Dictionary["blog"]; posts: BlogPost[]; locale: Locale; categories: BlogCategory[]; releaseStatus: "loading" | "ready" | "error" }) {
   const reduceMotion = useReducedMotion();
   const [query, setQuery] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
@@ -74,6 +79,7 @@ export function BlogExplorer({ t, posts, locale, categories }: { t: Dictionary["
   const [filterName, setFilterName] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterKeyword, setFilterKeyword] = useState("");
+  const [expandedRelease, setExpandedRelease] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -149,6 +155,9 @@ export function BlogExplorer({ t, posts, locale, categories }: { t: Dictionary["
         </button>
       </div>
 
+      {releaseStatus === "loading" && <p role="status" className="mb-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">{t.releasesLoading}</p>}
+      {releaseStatus === "error" && <p role="status" className="mb-5 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">{t.releasesUnavailable} <a href="https://github.com/PierideApp/Pieride/releases" target="_blank" rel="noreferrer" className="font-bold text-pieride-cyan underline underline-offset-4">{t.releasesGithub}</a></p>}
+
       <div className="grid gap-5 rounded-4xl border border-white/15 bg-white/7 p-5 shadow-xl shadow-black/10 sm:p-7">
         <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
           <div className="grid gap-2 text-sm font-bold text-white">
@@ -186,21 +195,38 @@ export function BlogExplorer({ t, posts, locale, categories }: { t: Dictionary["
         <LayoutGroup>
           <motion.div layout className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
-              {results.map((post, index) => (
-                <motion.article key={post.source} layout initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }} transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : Math.min(index * 0.025, 0.15), ease: easeOutPapillon }} whileHover={reduceMotion ? undefined : { y: -5 }} className="group h-full">
-                  <Link data-theme-surface href={localizedPath(locale, post.slug)} className="flex h-full min-h-80 flex-col overflow-hidden rounded-3xl border border-white/15 bg-white text-pieride-ink shadow-xl shadow-black/15 transition-colors hover:border-pieride-cyan focus-visible:outline-pieride-cyan">
-                    <div className="relative h-48 overflow-hidden bg-linear-to-br from-pieride-violet to-pieride-night">
-                      <Image src={withBasePath(post.cover)!} alt={post.coverAlt || t.imageFallback} fill unoptimized sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" className="object-cover transition duration-500 ease-out group-hover:scale-105" />
-                      <span className="absolute bottom-3 left-3 rounded-full border border-white/80 bg-pieride-ink/90 px-3 py-1.5 text-xs font-bold text-white shadow-lg">{post.category}</span>
-                    </div>
-                    <div className="flex flex-1 flex-col p-5 sm:p-6">
-                      <h3 className="text-xl font-bold leading-snug text-pieride-ink">{post.title}</h3>
-                      <p className="mt-3 line-clamp-3 flex-1 text-base leading-relaxed text-pieride-muted">{post.description}</p>
-                      <span className="mt-5 inline-flex min-h-10 items-center gap-2 self-start rounded-full border-2 border-pieride-violet bg-white px-4 text-sm font-bold text-pieride-violet transition duration-200 group-hover:bg-pieride-violet group-hover:text-white">{t.readArticle}<Icon name="arrow" className="size-4 transition group-hover:translate-x-1" /></span>
-                    </div>
-                  </Link>
-                </motion.article>
-              ))}
+              {results.map((post, index) => {
+                const isRelease = post.releaseBody !== undefined;
+                const isExpanded = expandedRelease === post.source;
+                const cardClass = "flex h-full min-h-80 w-full flex-col overflow-hidden rounded-3xl border border-white/15 bg-white text-left text-pieride-ink shadow-xl shadow-black/15 transition-colors hover:border-pieride-cyan focus-visible:outline-pieride-cyan";
+                const cardContent = <>
+                  <div className="relative h-48 w-full shrink-0 overflow-hidden bg-linear-to-br from-pieride-violet to-pieride-night">
+                    <Image src={withBasePath(post.cover)!} alt={post.coverAlt || t.imageFallback} fill unoptimized sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" className="object-cover transition duration-500 ease-out group-hover:scale-105" />
+                    <span className="absolute bottom-3 left-3 rounded-full border border-white/80 bg-pieride-ink/90 px-3 py-1.5 text-xs font-bold text-white shadow-lg">{post.category}</span>
+                    {post.publishedAt && <time dateTime={post.publishedAt} className="absolute bottom-3 right-3 rounded-full border border-white/50 bg-pieride-ink/85 px-3 py-1.5 text-xs font-semibold text-white shadow-lg">{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(post.publishedAt))}</time>}
+                  </div>
+                  <div className="flex flex-1 flex-col p-5 sm:p-6">
+                    {post.version && <p className="text-xs font-bold uppercase tracking-wider text-pieride-violet">{post.version}</p>}
+                    <h3 className="mt-1 text-xl font-bold leading-snug text-pieride-ink">{post.title}</h3>
+                    <p className="mt-3 line-clamp-3 flex-1 text-base leading-relaxed text-pieride-muted">{post.description}</p>
+                    <span className="mt-5 inline-flex min-h-10 items-center gap-2 self-start rounded-full border-2 border-pieride-violet bg-white px-4 text-sm font-bold text-pieride-violet transition duration-200 group-hover:bg-pieride-violet group-hover:text-white">{isRelease ? (isExpanded ? t.closeRelease : t.readRelease) : t.readArticle}<Icon name="arrow" className="size-4 transition group-hover:translate-x-1" /></span>
+                  </div>
+                </>;
+
+                return (
+                  <motion.article key={post.source} layout initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }} transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : Math.min(index * 0.025, 0.15), ease: easeOutPapillon }} whileHover={reduceMotion ? undefined : { y: -5 }} className="group h-full">
+                    {isRelease ? (
+                      <button data-theme-surface type="button" aria-expanded={isExpanded} aria-controls={`release-notes-${post.source}`} onClick={() => setExpandedRelease(isExpanded ? null : post.source)} className={cardClass}>{cardContent}</button>
+                    ) : (
+                      <Link data-theme-surface href={localizedPath(locale, post.slug)} className={cardClass}>{cardContent}</Link>
+                    )}
+                    {isRelease && isExpanded && <div id={`release-notes-${post.source}`} data-theme-surface className="mt-3 rounded-3xl border border-white/15 bg-white p-5 text-pieride-ink shadow-xl shadow-black/15 sm:p-6">
+                      <div className="markdown-body"><BlogMarkdown content={post.releaseBody || ""} locale={locale} /></div>
+                      {post.releaseUrl && <a href={post.releaseUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 border-t border-pieride-line pt-4 text-sm font-bold text-pieride-violet underline underline-offset-4">{t.releasesGithub}<Icon name="arrow" className="size-4" /></a>}
+                    </div>}
+                  </motion.article>
+                );
+              })}
             </AnimatePresence>
           </motion.div>
         </LayoutGroup>
