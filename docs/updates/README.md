@@ -14,7 +14,7 @@ content_en: |
 
   Each published version and its release notes are listed on [GitHub Releases](https://github.com/PierideApp/Pieride/releases).
 
-  [Read the v0.1.0-beta.1 release notes](/blog/updates/v0-1-0-beta-1).
+  Open the Blog page to browse the latest notes, loaded directly from [GitHub Releases](https://github.com/PierideApp/Pieride/releases).
 ---
 
 # Les mises à jour Piéride
@@ -25,4 +25,4 @@ Ce dossier rassemble les changements importants du projet : nouveautés, amélio
 
 Chaque version publiée et ses notes sont disponibles sur [les publications GitHub](https://github.com/PierideApp/Pieride/releases).
 
-[Lire les notes de la version v0.1.0-beta.1](/blog/updates/v0-1-0-beta-1).
+Ouvre la page Blog pour parcourir les dernières notes, chargées directement depuis [les releases GitHub](https://github.com/PierideApp/Pieride/releases).
