@@ -1,7 +1,20 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries/fr";
 import type { Locale } from "@/i18n/config";
 import type { BlogArchive, BlogArticle } from "@/lib/blog-content";
 import { BlogExplorer, type BlogPost } from "./blog-explorer";
+
+type GitHubRelease = {
+  id: number;
+  tag_name: string;
+  name: string | null;
+  html_url: string;
+  published_at: string | null;
+  body: string | null;
+  draft: boolean;
+};
 
 function postPath(page: BlogArticle) {
   const slug = page.slug === "index" ? "" : page.slug.endsWith("/index") ? page.slug.slice(0, -6) : page.slug;
@@ -18,11 +31,32 @@ function postCover(page: BlogArticle) {
   return "/visuels/accueil.jpg";
 }
 
+function plainText(markdown: string) {
+  return markdown
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/[*_~`>|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function releaseDescription(body: string, locale: Locale) {
+  const paragraph = body.split(/\n\s*\n/).map((part) => part.trim()).find((part) => part && !part.startsWith("#"));
+  return paragraph
+    ? plainText(paragraph).slice(0, 220)
+    : locale === "fr" ? "Notes de version de Piéride." : "Piéride release notes.";
+}
+
 const englishCategories: Record<string, string> = { updates: "Updates" };
+const releaseApi = "https://api.github.com/repos/PierideApp/Pieride/releases?per_page=100";
 
 export function PostList({ t, blog, locale }: { t: Dictionary["blog"]; blog: BlogArchive; locale: Locale }) {
+  const [releasePosts, setReleasePosts] = useState<BlogPost[]>([]);
+  const [releaseStatus, setReleaseStatus] = useState<"loading" | "ready" | "error">("loading");
   const articles = blog.pages.filter((page) => page.slug !== "index" && !page.slug.endsWith("/index"));
-  const posts: BlogPost[] = articles.map((page) => ({
+  const regularPosts: BlogPost[] = articles.map((page) => ({
     title: locale === "en" ? page.titleEn || page.title : page.title,
     description: locale === "en" ? page.descriptionEn || page.description : page.description,
     category: locale === "en" ? englishCategories[page.categorySlug] || page.categorySlug : blog.categories.find((category) => category.slug === page.categorySlug)?.name || page.categorySlug,
@@ -33,6 +67,48 @@ export function PostList({ t, blog, locale }: { t: Dictionary["blog"]; blog: Blo
     cover: postCover(page),
     coverAlt: page.title,
   }));
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(releaseApi, { headers: { Accept: "application/vnd.github+json" }, cache: "no-store", signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`GitHub API ${response.status}`);
+        return response.json() as Promise<GitHubRelease[]>;
+      })
+      .then((releases) => {
+        if (!Array.isArray(releases)) throw new Error("Invalid GitHub releases response");
+        const posts = releases
+          .filter((release) => !release.draft && Boolean(release.published_at && release.tag_name && release.html_url))
+          .map((release): BlogPost => {
+            const body = release.body?.trim() || "";
+            return {
+              title: release.name?.trim() || release.tag_name,
+              description: releaseDescription(body, locale),
+              category: locale === "en" ? "Updates" : "MAJ",
+              categorySlug: "updates",
+              slug: "",
+              source: `release:${release.id}`,
+              searchText: plainText(body),
+              cover: "/visuels/accueil.jpg",
+              coverAlt: locale === "en" ? `Piéride release ${release.tag_name}` : `Release Piéride ${release.tag_name}`,
+              releaseBody: body,
+              releaseUrl: release.html_url,
+              publishedAt: release.published_at || undefined,
+              version: release.tag_name,
+            };
+          });
+        setReleasePosts(posts);
+        setReleaseStatus("ready");
+      })
+      .catch((error: unknown) => {
+        if (error instanceof Error && error.name === "AbortError") return;
+        setReleaseStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [locale]);
+
+  const posts = [...regularPosts, ...releasePosts];
   const categories = blog.categories.map(({ slug, name }) => ({ slug, name: locale === "en" ? englishCategories[slug] || slug : name }));
 
   return (
@@ -41,9 +117,9 @@ export function PostList({ t, blog, locale }: { t: Dictionary["blog"]; blog: Blo
         <p className="text-sm font-bold uppercase tracking-widest text-pieride-cyan">{t.eyebrow}</p>
         <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-balance sm:text-6xl">{t.title}</h1>
         <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/65">{t.description}</p>
-        <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80">{articles.length} {t.articleCount}</span>
+        <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80">{posts.length} {t.articleCount}</span>
       </header>
-      <BlogExplorer t={t} posts={posts} locale={locale} categories={categories} />
+      <BlogExplorer t={t} posts={posts} locale={locale} categories={categories} releaseStatus={releaseStatus} />
     </main>
   );
 }
